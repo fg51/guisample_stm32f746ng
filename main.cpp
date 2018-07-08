@@ -15,8 +15,8 @@ int main() {
   lcd.SetBackColor(LCD_COLOR_BLUE);
   lcd.SetTextColor(LCD_COLOR_WHITE);
   wait(0.3);
-  lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"DISCOVERY STM32F746NG",
-                      CENTER_MODE);
+  lcd.DisplayStringAt(
+      0, LINE(5), (uint8_t *)"DISCOVERY STM32F746NG", CENTER_MODE);
   wait(1);
 
   while (1) {
