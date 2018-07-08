@@ -1,9 +1,67 @@
 #include "LCD_DISCO_F746NG.h"
 #include "mbed.h"
 
+
+namespace lcd_color {
+enum lcd_color {
+  kBLUE = 0xFF0000FF,
+  kGREEN = 0xFF00FF00,
+  kRED = 0xFFFF0000,
+  kCYAN = 0xFF00FFFF,
+  kMAGENTA = 0xFFFF00FF,
+  kYELLOW = 0xFFFFFF00,
+  kLIGHTBLUE = 0xFF8080FF,
+  kLIGHTGREEN = 0xFF80FF80,
+  kLIGHTRED = 0xFFFF8080,
+  kLIGHTCYAN = 0xFF80FFFF,
+  kLIGHTMAGENTA = 0xFFFF80FF,
+  kLIGHTYELLOW = 0xFFFFFF80,
+  kDARKBLUE = 0xFF000080,
+  kDARKGREEN = 0xFF008000,
+  kDARKRED = 0xFF800000,
+  kDARKCYAN = 0xFF008080,
+  kDARKMAGENTA = 0xFF800080,
+  kDARKYELLOW = 0xFF808000,
+  kWHITE = 0xFFFFFFFF,
+  kLIGHTGRAY = 0xFFD3D3D3,
+  kGRAY = 0xFF808080,
+  kDARKGRAY = 0xFF404040,
+  kBLACK = 0xFF000000,
+  kBROWN = 0xFFA52A2A,
+  kORANGE = 0xFFFFA500,
+  kTRANSPARENT = 0xFF000000,
+
+};
+
+const uint16_t kWIDTH = 480;
+const uint16_t kHEIGHT = 272;
+
+} // namespace lcd_color
+
+/**
+ * @brief LCD default font
+ */
+// #define LCD_DEFAULT_FONT        Font24
+
 LCD_DISCO_F746NG lcd;
 
 DigitalOut led1(LED1);
+
+void draw_left_face();
+void draw_closed_face();
+
+static uint32_t pacman_dot[14][14] = {};
+
+// void move_left(*Point Point);
+// void move_left(uint32_t x, uint32_t y);
+void move_left(pPoint pPoint);
+
+
+Ticker timer;
+
+uint32_t count_us = 0;
+void counter();
+
 
 int main() {
   led1 = 1;
@@ -11,36 +69,513 @@ int main() {
   lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"MBED EXAMPLE", CENTER_MODE);
   wait(1);
 
-  lcd.Clear(LCD_COLOR_BLUE);
-  lcd.SetBackColor(LCD_COLOR_BLUE);
-  lcd.SetTextColor(LCD_COLOR_WHITE);
+  lcd.Clear(lcd_color::kBLACK);
+  lcd.SetBackColor(lcd_color::kBLACK);
+  lcd.SetTextColor(lcd_color::kWHITE);
   wait(0.3);
+
   lcd.DisplayStringAt(
       0, LINE(5), (uint8_t *)"DISCOVERY STM32F746NG", CENTER_MODE);
   wait(1);
 
-  while (1) {
-    // lcd.Clear(LCD_COLOR_GREEN);
-    //
-    // lcd.SetTextColor(LCD_COLOR_BLUE);
-    // lcd.DrawRect(10, 20, 50, 50);
-    // wait(0.1);
-    // lcd.SetTextColor(LCD_COLOR_BROWN);
-    // lcd.DrawCircle(80, 80, 50);
-    // wait(0.1);
-    // lcd.SetTextColor(LCD_COLOR_YELLOW);
-    // lcd.DrawEllipse(150, 150, 50, 100);
-    // wait(0.1);
-    // lcd.SetTextColor(LCD_COLOR_RED);
-    // lcd.FillCircle(200, 200, 40);
-    // wait(1);
+  bool is_opened_mouse = false;
+  Point Point = {
+    .X = lcd_color::kWIDTH - 1,
+    .Y = 80,
+  };
+  // Point.X = 0;
 
-    // lcd.SetBackColor(LCD_COLOR_ORANGE);
-    // lcd.SetTextColor(LCD_COLOR_CYAN);
-    // lcd.DisplayStringAt(0, LINE(5), (uint8_t *)"HAVE FUN !!!", CENTER_MODE);
-    // wait(1);
+  timer.attach_us(&counter, 10);
+
+  uint32_t msec = 0;
+  uint32_t draw_count = 0;
+  uint32_t led_count = 0;
+
+  while (1) {
+    if (count_us < 1E+4){
+      wait(0.002);
+      continue;
+    }
+    count_us = 0;
+
+    msec = msec + 10;
+    if (msec < 100) {
+      continue;
+    }
+    msec = 0;
+
+    draw_count = draw_count + 100;
+    if (draw_count < 100) {
+      continue;
+    }
+    draw_count = 0;
+
+    if (is_opened_mouse) {
+      is_opened_mouse = false;
+      draw_closed_face();
+    } else {
+      is_opened_mouse = true;
+      draw_left_face();
+    }
+    move_left(&Point);
+
+    for (int i = 0; i < 14; i++) {
+      for (int j = 0; j < 14; j++) {
+        lcd.DrawPixel(Point.X + j, Point.Y + i, pacman_dot[i][j]);
+      }
+    }
+
+
+    led_count = led_count + 100;
+    if (led_count < 1000) {
+      continue;
+    }
+    led_count = 0;
 
     led1 = !led1;
-    wait(1);
   }
+}
+
+
+void counter()
+{
+count_us += 10;
+}
+
+
+void draw_left_face() {
+  using lcd_color::kBLACK;
+  using lcd_color::kYELLOW;
+
+  pacman_dot[0x0][0x0] = kBLACK;
+  pacman_dot[0x0][0x1] = kBLACK;
+  pacman_dot[0x0][0x2] = kBLACK;
+  pacman_dot[0x0][0x3] = kYELLOW;
+  pacman_dot[0x0][0x4] = kYELLOW;
+  pacman_dot[0x0][0x5] = kYELLOW;
+  pacman_dot[0x0][0x6] = kYELLOW;
+  pacman_dot[0x0][0x7] = kYELLOW;
+  pacman_dot[0x0][0x8] = kBLACK;
+  pacman_dot[0x0][0x9] = kBLACK;
+  pacman_dot[0x0][0xA] = kBLACK;
+  pacman_dot[0x0][0xB] = kBLACK;
+  pacman_dot[0x0][0xC] = kBLACK;
+  pacman_dot[0x0][0xD] = kBLACK;
+
+  pacman_dot[0x1][0x0] = kBLACK;
+  pacman_dot[0x1][0x1] = kYELLOW;
+  pacman_dot[0x1][0x2] = kYELLOW;
+  pacman_dot[0x1][0x3] = kYELLOW;
+  pacman_dot[0x1][0x4] = kYELLOW;
+  pacman_dot[0x1][0x5] = kYELLOW;
+  pacman_dot[0x1][0x6] = kYELLOW;
+  pacman_dot[0x1][0x7] = kYELLOW;
+  pacman_dot[0x1][0x8] = kYELLOW;
+  pacman_dot[0x1][0x9] = kYELLOW;
+  pacman_dot[0x1][0xA] = kYELLOW;
+  pacman_dot[0x1][0xB] = kBLACK;
+  pacman_dot[0x1][0xC] = kBLACK;
+  pacman_dot[0x1][0xD] = kBLACK;
+
+  pacman_dot[0x2][0x0] = kYELLOW;
+  pacman_dot[0x2][0x1] = kYELLOW;
+  pacman_dot[0x2][0x2] = kYELLOW;
+  pacman_dot[0x2][0x3] = kYELLOW;
+  pacman_dot[0x2][0x4] = kYELLOW;
+  pacman_dot[0x2][0x5] = kYELLOW;
+  pacman_dot[0x2][0x6] = kYELLOW;
+  pacman_dot[0x2][0x7] = kYELLOW;
+  pacman_dot[0x2][0x8] = kYELLOW;
+  pacman_dot[0x2][0x9] = kYELLOW;
+  pacman_dot[0x2][0xA] = kYELLOW;
+  pacman_dot[0x2][0xB] = kBLACK;
+  pacman_dot[0x2][0xC] = kBLACK;
+  pacman_dot[0x2][0xD] = kBLACK;
+
+  pacman_dot[0x3][0x0] = kYELLOW;
+  pacman_dot[0x3][0x1] = kYELLOW;
+  pacman_dot[0x3][0x2] = kYELLOW;
+  pacman_dot[0x3][0x3] = kYELLOW;
+  pacman_dot[0x3][0x4] = kYELLOW;
+  pacman_dot[0x3][0x5] = kYELLOW;
+  pacman_dot[0x3][0x6] = kYELLOW;
+  pacman_dot[0x3][0x7] = kYELLOW;
+  pacman_dot[0x3][0x8] = kYELLOW;
+  pacman_dot[0x3][0x9] = kYELLOW;
+  pacman_dot[0x3][0xA] = kYELLOW;
+  pacman_dot[0x3][0xB] = kBLACK;
+  pacman_dot[0x3][0xC] = kBLACK;
+  pacman_dot[0x3][0xD] = kBLACK;
+
+  pacman_dot[0x4][0x0] = kBLACK;
+  pacman_dot[0x4][0x1] = kBLACK;
+  pacman_dot[0x4][0x2] = kYELLOW;
+  pacman_dot[0x4][0x3] = kYELLOW;
+  pacman_dot[0x4][0x4] = kYELLOW;
+  pacman_dot[0x4][0x5] = kYELLOW;
+  pacman_dot[0x4][0x6] = kYELLOW;
+  pacman_dot[0x4][0x7] = kYELLOW;
+  pacman_dot[0x4][0x8] = kYELLOW;
+  pacman_dot[0x4][0x9] = kYELLOW;
+  pacman_dot[0x4][0xA] = kYELLOW;
+  pacman_dot[0x4][0xB] = kYELLOW;
+  pacman_dot[0x4][0xC] = kBLACK;
+  pacman_dot[0x4][0xD] = kBLACK;
+
+  pacman_dot[0x5][0x0] = kBLACK;
+  pacman_dot[0x5][0x1] = kBLACK;
+  pacman_dot[0x5][0x2] = kBLACK;
+  pacman_dot[0x5][0x3] = kBLACK;
+  pacman_dot[0x5][0x4] = kBLACK;
+  pacman_dot[0x5][0x5] = kYELLOW;
+  pacman_dot[0x5][0x6] = kYELLOW;
+  pacman_dot[0x5][0x7] = kYELLOW;
+  pacman_dot[0x5][0x8] = kYELLOW;
+  pacman_dot[0x5][0x9] = kYELLOW;
+  pacman_dot[0x5][0xA] = kYELLOW;
+  pacman_dot[0x5][0xB] = kYELLOW;
+  pacman_dot[0x5][0xC] = kBLACK;
+  pacman_dot[0x5][0xD] = kBLACK;
+
+  pacman_dot[0x6][0x0] = kBLACK;
+  pacman_dot[0x6][0x1] = kBLACK;
+  pacman_dot[0x6][0x2] = kBLACK;
+  pacman_dot[0x6][0x3] = kBLACK;
+  pacman_dot[0x6][0x4] = kBLACK;
+  pacman_dot[0x6][0x5] = kBLACK;
+  pacman_dot[0x6][0x6] = kBLACK;
+  pacman_dot[0x6][0x7] = kBLACK;
+  pacman_dot[0x6][0x8] = kYELLOW;
+  pacman_dot[0x6][0x9] = kYELLOW;
+  pacman_dot[0x6][0xA] = kYELLOW;
+  pacman_dot[0x6][0xB] = kYELLOW;
+  pacman_dot[0x6][0xC] = kBLACK;
+  pacman_dot[0x6][0xD] = kBLACK;
+
+  pacman_dot[0x7][0x0] = kBLACK;
+  pacman_dot[0x7][0x1] = kBLACK;
+  pacman_dot[0x7][0x2] = kBLACK;
+  pacman_dot[0x7][0x3] = kBLACK;
+  pacman_dot[0x7][0x4] = kBLACK;
+  pacman_dot[0x7][0x5] = kYELLOW;
+  pacman_dot[0x7][0x6] = kYELLOW;
+  pacman_dot[0x7][0x7] = kYELLOW;
+  pacman_dot[0x7][0x8] = kYELLOW;
+  pacman_dot[0x7][0x9] = kYELLOW;
+  pacman_dot[0x7][0xA] = kYELLOW;
+  pacman_dot[0x7][0xB] = kYELLOW;
+  pacman_dot[0x7][0xC] = kBLACK;
+  pacman_dot[0x7][0xD] = kBLACK;
+
+  pacman_dot[0x8][0x0] = kBLACK;
+  pacman_dot[0x8][0x1] = kBLACK;
+  pacman_dot[0x8][0x2] = kYELLOW;
+  pacman_dot[0x8][0x3] = kYELLOW;
+  pacman_dot[0x8][0x4] = kYELLOW;
+  pacman_dot[0x8][0x5] = kYELLOW;
+  pacman_dot[0x8][0x6] = kYELLOW;
+  pacman_dot[0x8][0x7] = kYELLOW;
+  pacman_dot[0x8][0x8] = kYELLOW;
+  pacman_dot[0x8][0x9] = kYELLOW;
+  pacman_dot[0x8][0xA] = kYELLOW;
+  pacman_dot[0x8][0xB] = kYELLOW;
+  pacman_dot[0x8][0xC] = kBLACK;
+  pacman_dot[0x8][0xD] = kBLACK;
+
+  pacman_dot[0x9][0x0] = kYELLOW;
+  pacman_dot[0x9][0x1] = kYELLOW;
+  pacman_dot[0x9][0x2] = kYELLOW;
+  pacman_dot[0x9][0x3] = kYELLOW;
+  pacman_dot[0x9][0x4] = kYELLOW;
+  pacman_dot[0x9][0x5] = kYELLOW;
+  pacman_dot[0x9][0x6] = kYELLOW;
+  pacman_dot[0x9][0x7] = kYELLOW;
+  pacman_dot[0x9][0x8] = kYELLOW;
+  pacman_dot[0x9][0x9] = kYELLOW;
+  pacman_dot[0x9][0xA] = kYELLOW;
+  pacman_dot[0x9][0xB] = kBLACK;
+  pacman_dot[0x9][0xC] = kBLACK;
+  pacman_dot[0x9][0xD] = kBLACK;
+
+  pacman_dot[0xA][0x0] = kYELLOW;
+  pacman_dot[0xA][0x1] = kYELLOW;
+  pacman_dot[0xA][0x2] = kYELLOW;
+  pacman_dot[0xA][0x3] = kYELLOW;
+  pacman_dot[0xA][0x4] = kYELLOW;
+  pacman_dot[0xA][0x5] = kYELLOW;
+  pacman_dot[0xA][0x6] = kYELLOW;
+  pacman_dot[0xA][0x7] = kYELLOW;
+  pacman_dot[0xA][0x8] = kYELLOW;
+  pacman_dot[0xA][0x9] = kYELLOW;
+  pacman_dot[0xA][0xA] = kYELLOW;
+  pacman_dot[0xA][0xB] = kBLACK;
+  pacman_dot[0xA][0xC] = kBLACK;
+  pacman_dot[0xA][0xD] = kBLACK;
+
+  pacman_dot[0xB][0x0] = kBLACK;
+  pacman_dot[0xB][0x1] = kYELLOW;
+  pacman_dot[0xB][0x2] = kYELLOW;
+  pacman_dot[0xB][0x3] = kYELLOW;
+  pacman_dot[0xB][0x4] = kYELLOW;
+  pacman_dot[0xB][0x5] = kYELLOW;
+  pacman_dot[0xB][0x6] = kYELLOW;
+  pacman_dot[0xB][0x7] = kYELLOW;
+  pacman_dot[0xB][0x8] = kYELLOW;
+  pacman_dot[0xB][0x9] = kYELLOW;
+  pacman_dot[0xB][0xA] = kYELLOW;
+  pacman_dot[0xB][0xB] = kBLACK;
+  pacman_dot[0xB][0xC] = kBLACK;
+  pacman_dot[0xB][0xD] = kBLACK;
+
+  pacman_dot[0xC][0x0] = kBLACK;
+  pacman_dot[0xC][0x1] = kBLACK;
+  pacman_dot[0xC][0x2] = kBLACK;
+  pacman_dot[0xC][0x3] = kYELLOW;
+  pacman_dot[0xC][0x4] = kYELLOW;
+  pacman_dot[0xC][0x5] = kYELLOW;
+  pacman_dot[0xC][0x6] = kYELLOW;
+  pacman_dot[0xC][0x7] = kYELLOW;
+  pacman_dot[0xC][0x8] = kBLACK;
+  pacman_dot[0xC][0x9] = kBLACK;
+  pacman_dot[0xC][0xA] = kBLACK;
+  pacman_dot[0xC][0xB] = kBLACK;
+  pacman_dot[0xC][0xC] = kBLACK;
+  pacman_dot[0xC][0xD] = kBLACK;
+
+  pacman_dot[0xD][0x0] = kBLACK;
+  pacman_dot[0xD][0x1] = kBLACK;
+  pacman_dot[0xD][0x2] = kBLACK;
+  pacman_dot[0xD][0x3] = kBLACK;
+  pacman_dot[0xD][0x4] = kBLACK;
+  pacman_dot[0xD][0x5] = kBLACK;
+  pacman_dot[0xD][0x6] = kBLACK;
+  pacman_dot[0xD][0x7] = kBLACK;
+  pacman_dot[0xD][0x8] = kBLACK;
+  pacman_dot[0xD][0x9] = kBLACK;
+  pacman_dot[0xD][0xA] = kBLACK;
+  pacman_dot[0xD][0xB] = kBLACK;
+  pacman_dot[0xD][0xC] = kBLACK;
+  pacman_dot[0xD][0xD] = kBLACK;
+}
+
+
+void draw_closed_face() {
+  using lcd_color::kBLACK;
+  using lcd_color::kYELLOW;
+
+  pacman_dot[0x0][0x0] = kBLACK;
+  pacman_dot[0x0][0x1] = kBLACK;
+  pacman_dot[0x0][0x2] = kBLACK;
+  pacman_dot[0x0][0x3] = kBLACK;
+  pacman_dot[0x0][0x4] = kYELLOW;
+  pacman_dot[0x0][0x5] = kYELLOW;
+  pacman_dot[0x0][0x6] = kYELLOW;
+  pacman_dot[0x0][0x7] = kYELLOW;
+  pacman_dot[0x0][0x8] = kBLACK;
+  pacman_dot[0x0][0x9] = kBLACK;
+  pacman_dot[0x0][0xA] = kBLACK;
+  pacman_dot[0x0][0xB] = kBLACK;
+  pacman_dot[0x0][0xC] = kBLACK;
+  pacman_dot[0x0][0xD] = kBLACK;
+
+  pacman_dot[0x1][0x0] = kBLACK;
+  pacman_dot[0x1][0x1] = kBLACK;
+  pacman_dot[0x1][0x2] = kYELLOW;
+  pacman_dot[0x1][0x3] = kYELLOW;
+  pacman_dot[0x1][0x4] = kYELLOW;
+  pacman_dot[0x1][0x5] = kYELLOW;
+  pacman_dot[0x1][0x6] = kYELLOW;
+  pacman_dot[0x1][0x7] = kYELLOW;
+  pacman_dot[0x1][0x8] = kYELLOW;
+  pacman_dot[0x1][0x9] = kYELLOW;
+  pacman_dot[0x1][0xA] = kBLACK;
+  pacman_dot[0x1][0xB] = kBLACK;
+  pacman_dot[0x1][0xC] = kBLACK;
+  pacman_dot[0x1][0xD] = kBLACK;
+
+  pacman_dot[0x2][0x0] = kBLACK;
+  pacman_dot[0x2][0x1] = kYELLOW;
+  pacman_dot[0x2][0x2] = kYELLOW;
+  pacman_dot[0x2][0x3] = kYELLOW;
+  pacman_dot[0x2][0x4] = kYELLOW;
+  pacman_dot[0x2][0x5] = kYELLOW;
+  pacman_dot[0x2][0x6] = kYELLOW;
+  pacman_dot[0x2][0x7] = kYELLOW;
+  pacman_dot[0x2][0x8] = kYELLOW;
+  pacman_dot[0x2][0x9] = kYELLOW;
+  pacman_dot[0x2][0xA] = kYELLOW;
+  pacman_dot[0x2][0xB] = kBLACK;
+  pacman_dot[0x2][0xC] = kBLACK;
+  pacman_dot[0x2][0xD] = kBLACK;
+
+  pacman_dot[0x3][0x0] = kBLACK;
+  pacman_dot[0x3][0x1] = kYELLOW;
+  pacman_dot[0x3][0x2] = kYELLOW;
+  pacman_dot[0x3][0x3] = kYELLOW;
+  pacman_dot[0x3][0x4] = kYELLOW;
+  pacman_dot[0x3][0x5] = kYELLOW;
+  pacman_dot[0x3][0x6] = kYELLOW;
+  pacman_dot[0x3][0x7] = kYELLOW;
+  pacman_dot[0x3][0x8] = kYELLOW;
+  pacman_dot[0x3][0x9] = kYELLOW;
+  pacman_dot[0x3][0xA] = kYELLOW;
+  pacman_dot[0x3][0xB] = kBLACK;
+  pacman_dot[0x3][0xC] = kBLACK;
+  pacman_dot[0x3][0xD] = kBLACK;
+
+  pacman_dot[0x4][0x0] = kYELLOW;
+  pacman_dot[0x4][0x1] = kYELLOW;
+  pacman_dot[0x4][0x2] = kYELLOW;
+  pacman_dot[0x4][0x3] = kYELLOW;
+  pacman_dot[0x4][0x4] = kYELLOW;
+  pacman_dot[0x4][0x5] = kYELLOW;
+  pacman_dot[0x4][0x6] = kYELLOW;
+  pacman_dot[0x4][0x7] = kYELLOW;
+  pacman_dot[0x4][0x8] = kYELLOW;
+  pacman_dot[0x4][0x9] = kYELLOW;
+  pacman_dot[0x4][0xA] = kYELLOW;
+  pacman_dot[0x4][0xB] = kYELLOW;
+  pacman_dot[0x4][0xC] = kBLACK;
+  pacman_dot[0x4][0xD] = kBLACK;
+
+  pacman_dot[0x5][0x0] = kYELLOW;
+  pacman_dot[0x5][0x1] = kYELLOW;
+  pacman_dot[0x5][0x2] = kYELLOW;
+  pacman_dot[0x5][0x3] = kYELLOW;
+  pacman_dot[0x5][0x4] = kYELLOW;
+  pacman_dot[0x5][0x5] = kYELLOW;
+  pacman_dot[0x5][0x6] = kYELLOW;
+  pacman_dot[0x5][0x7] = kYELLOW;
+  pacman_dot[0x5][0x8] = kYELLOW;
+  pacman_dot[0x5][0x9] = kYELLOW;
+  pacman_dot[0x5][0xA] = kYELLOW;
+  pacman_dot[0x5][0xB] = kYELLOW;
+  pacman_dot[0x5][0xC] = kBLACK;
+  pacman_dot[0x5][0xD] = kBLACK;
+
+  pacman_dot[0x6][0x0] = kYELLOW;
+  pacman_dot[0x6][0x1] = kYELLOW;
+  pacman_dot[0x6][0x2] = kYELLOW;
+  pacman_dot[0x6][0x3] = kYELLOW;
+  pacman_dot[0x6][0x4] = kYELLOW;
+  pacman_dot[0x6][0x5] = kYELLOW;
+  pacman_dot[0x6][0x6] = kYELLOW;
+  pacman_dot[0x6][0x7] = kYELLOW;
+  pacman_dot[0x6][0x8] = kYELLOW;
+  pacman_dot[0x6][0x9] = kYELLOW;
+  pacman_dot[0x6][0xA] = kYELLOW;
+  pacman_dot[0x6][0xB] = kYELLOW;
+  pacman_dot[0x6][0xC] = kBLACK;
+  pacman_dot[0x6][0xD] = kBLACK;
+
+  pacman_dot[0x7][0x0] = kYELLOW;
+  pacman_dot[0x7][0x1] = kYELLOW;
+  pacman_dot[0x7][0x2] = kYELLOW;
+  pacman_dot[0x7][0x3] = kYELLOW;
+  pacman_dot[0x7][0x4] = kYELLOW;
+  pacman_dot[0x7][0x5] = kYELLOW;
+  pacman_dot[0x7][0x6] = kYELLOW;
+  pacman_dot[0x7][0x7] = kYELLOW;
+  pacman_dot[0x7][0x8] = kYELLOW;
+  pacman_dot[0x7][0x9] = kYELLOW;
+  pacman_dot[0x7][0xA] = kYELLOW;
+  pacman_dot[0x7][0xB] = kYELLOW;
+  pacman_dot[0x7][0xC] = kBLACK;
+  pacman_dot[0x7][0xD] = kBLACK;
+
+  pacman_dot[0x8][0x0] = kYELLOW;
+  pacman_dot[0x8][0x1] = kYELLOW;
+  pacman_dot[0x8][0x2] = kYELLOW;
+  pacman_dot[0x8][0x3] = kYELLOW;
+  pacman_dot[0x8][0x4] = kYELLOW;
+  pacman_dot[0x8][0x5] = kYELLOW;
+  pacman_dot[0x8][0x6] = kYELLOW;
+  pacman_dot[0x8][0x7] = kYELLOW;
+  pacman_dot[0x8][0x8] = kYELLOW;
+  pacman_dot[0x8][0x9] = kYELLOW;
+  pacman_dot[0x8][0xA] = kYELLOW;
+  pacman_dot[0x8][0xB] = kYELLOW;
+  pacman_dot[0x8][0xC] = kBLACK;
+  pacman_dot[0x8][0xD] = kBLACK;
+
+  pacman_dot[0x9][0x0] = kBLACK;
+  pacman_dot[0x9][0x1] = kYELLOW;
+  pacman_dot[0x9][0x2] = kYELLOW;
+  pacman_dot[0x9][0x3] = kYELLOW;
+  pacman_dot[0x9][0x4] = kYELLOW;
+  pacman_dot[0x9][0x5] = kYELLOW;
+  pacman_dot[0x9][0x6] = kYELLOW;
+  pacman_dot[0x9][0x7] = kYELLOW;
+  pacman_dot[0x9][0x8] = kYELLOW;
+  pacman_dot[0x9][0x9] = kYELLOW;
+  pacman_dot[0x9][0xA] = kYELLOW;
+  pacman_dot[0x9][0xB] = kBLACK;
+  pacman_dot[0x9][0xC] = kBLACK;
+  pacman_dot[0x9][0xD] = kBLACK;
+
+  pacman_dot[0xA][0x0] = kBLACK;
+  pacman_dot[0xA][0x1] = kYELLOW;
+  pacman_dot[0xA][0x2] = kYELLOW;
+  pacman_dot[0xA][0x3] = kYELLOW;
+  pacman_dot[0xA][0x4] = kYELLOW;
+  pacman_dot[0xA][0x5] = kYELLOW;
+  pacman_dot[0xA][0x6] = kYELLOW;
+  pacman_dot[0xA][0x7] = kYELLOW;
+  pacman_dot[0xA][0x8] = kYELLOW;
+  pacman_dot[0xA][0x9] = kYELLOW;
+  pacman_dot[0xA][0xA] = kYELLOW;
+  pacman_dot[0xA][0xB] = kBLACK;
+  pacman_dot[0xA][0xC] = kBLACK;
+  pacman_dot[0xA][0xD] = kBLACK;
+
+  pacman_dot[0xB][0x0] = kBLACK;
+  pacman_dot[0xB][0x1] = kBLACK;
+  pacman_dot[0xB][0x2] = kYELLOW;
+  pacman_dot[0xB][0x3] = kYELLOW;
+  pacman_dot[0xB][0x4] = kYELLOW;
+  pacman_dot[0xB][0x5] = kYELLOW;
+  pacman_dot[0xB][0x6] = kYELLOW;
+  pacman_dot[0xB][0x7] = kYELLOW;
+  pacman_dot[0xB][0x8] = kYELLOW;
+  pacman_dot[0xB][0x9] = kYELLOW;
+  pacman_dot[0xB][0xA] = kBLACK;
+  pacman_dot[0xB][0xB] = kBLACK;
+  pacman_dot[0xB][0xC] = kBLACK;
+  pacman_dot[0xB][0xD] = kBLACK;
+
+  pacman_dot[0xC][0x0] = kBLACK;
+  pacman_dot[0xC][0x1] = kBLACK;
+  pacman_dot[0xC][0x2] = kBLACK;
+  pacman_dot[0xC][0x3] = kBLACK;
+  pacman_dot[0xC][0x4] = kYELLOW;
+  pacman_dot[0xC][0x5] = kYELLOW;
+  pacman_dot[0xC][0x6] = kYELLOW;
+  pacman_dot[0xC][0x7] = kYELLOW;
+  pacman_dot[0xC][0x8] = kBLACK;
+  pacman_dot[0xC][0x9] = kBLACK;
+  pacman_dot[0xC][0xA] = kBLACK;
+  pacman_dot[0xC][0xB] = kBLACK;
+  pacman_dot[0xC][0xC] = kBLACK;
+  pacman_dot[0xC][0xD] = kBLACK;
+
+  pacman_dot[0xD][0x0] = kBLACK;
+  pacman_dot[0xD][0x1] = kBLACK;
+  pacman_dot[0xD][0x2] = kBLACK;
+  pacman_dot[0xD][0x3] = kBLACK;
+  pacman_dot[0xD][0x4] = kBLACK;
+  pacman_dot[0xD][0x5] = kBLACK;
+  pacman_dot[0xD][0x6] = kBLACK;
+  pacman_dot[0xD][0x7] = kBLACK;
+  pacman_dot[0xD][0x8] = kBLACK;
+  pacman_dot[0xD][0x9] = kBLACK;
+  pacman_dot[0xD][0xA] = kBLACK;
+  pacman_dot[0xD][0xB] = kBLACK;
+  pacman_dot[0xD][0xC] = kBLACK;
+  pacman_dot[0xD][0xD] = kBLACK;
+}
+
+
+void move_left(pPoint pPoint)
+{
+  pPoint->X = pPoint->X - 1;
 }
