@@ -2,7 +2,7 @@
 Language:        Cpp
 BasedOnStyle:  LLVM
 # AccessModifierOffset: -2
-# AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: AlwaysBreak
 # AlignConsecutiveAssignments: false
 # AlignConsecutiveDeclarations: false
 # AlignEscapedNewlines: Right
@@ -20,7 +20,7 @@ AllowShortFunctionsOnASingleLine: false
 # AlwaysBreakTemplateDeclarations: false
 # BinPackArguments: true
 # BinPackParameters: true
-# BraceWrapping:   
+# BraceWrapping:
 #   AfterClass:      false
 #   AfterControlStatement: false
 #   AfterEnum:       false
@@ -55,12 +55,12 @@ AllowShortFunctionsOnASingleLine: false
 # DisableFormat:   false
 # ExperimentalAutoDetectBinPacking: false
 # FixNamespaceComments: true
-# ForEachMacros:   
+# ForEachMacros:
 #   - foreach
 #   - Q_FOREACH
 #   - BOOST_FOREACH
 # IncludeBlocks:   Preserve
-# IncludeCategories: 
+# IncludeCategories:
 #   - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
 #     Priority:        2
 #   - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
@@ -90,7 +90,7 @@ AllowShortFunctionsOnASingleLine: false
 # PenaltyExcessCharacter: 1000000
 # PenaltyReturnTypeOnItsOwnLine: 60
 # PointerAlignment: Right
-# RawStringFormats: 
+# RawStringFormats:
 #   - Delimiter:       pb
 #     Language:        TextProto
 #     BasedOnStyle:    google
